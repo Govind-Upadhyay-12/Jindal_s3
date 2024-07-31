@@ -1,8 +1,18 @@
 require("dotenv").config();
 const express = require("express");
 const AWS = require("aws-sdk");
+const cors=require("cors")
+const bodyParser=require("body-parser")
 const app = express();
 const port = 8080;
+
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
 const s3 = new AWS.S3({
   accessKeyId: process.env.ACCESS_KEY,
   secretAccessKey: process.env.ACCESS_SECRET,
@@ -48,6 +58,23 @@ app.get("/s3-data", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+app.post('/login', async (req, res) => {
+  console.log(req.body);
+  const { email, password } = req.body;
+  
+  try {
+    if (email === "govind12@gmail.com" && password === "1234") {
+      return res.status(200).json({ statusCode: 200, message: "user login successfully" });
+    } else if (email === "govind12@gmail.com" && password !== "1234") {
+      return res.status(401).json({ statusCode: 401, message: "password is wrong" });
+    } else {
+      return res.status(404).json({ statusCode: 404, message: "user not found" });
+    }
+  } catch (error) {
+    return res.status(500).json({ statusCode: 500, message: error.message });
+  }
+});
+
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
