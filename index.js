@@ -6,6 +6,7 @@ const bodyParser=require("body-parser")
 const db=require("./Db/index")
 const routes=require("./routes/auth")
 const app = express();
+const path = require('path');
 const port = 8080;
 app.use(cors());
 app.use(express.json());
@@ -52,13 +53,24 @@ const generateLinksForObjects = (bucketName, objects) => {
     lastModified: obj.LastModified,
   }));
 };
+app.use("/admin", express.static(path.join(__dirname, "./admin/dist/admin")));
+app.get(/\/admin\/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "./admin/dist/admin/index.html"));
+});
 app.get("/s3-data", async (req, res) => {
   try {
     const bucketName = process.env.BUCKET;
+    const query = req.query.q;
     const objects = await listObjects(bucketName);
-    const links = generateLinksForObjects(bucketName, objects);
+    let filteredObjects = objects;
 
-   return res.status(200).json({statusCode:200,links:links});
+    if (query) {
+      const regex = new RegExp(query, 'i'); 
+      filteredObjects = objects.filter(obj => regex.test(obj.Key));
+    }
+
+    const links = generateLinksForObjects(bucketName, filteredObjects);
+    return res.status(200).json({ statusCode: 200, links: links });
   } catch (error) {
     console.error("Error accessing S3 data:", error);
     res.status(500).json({ error: "Internal Server Error" });

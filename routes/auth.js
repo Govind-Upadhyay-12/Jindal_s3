@@ -45,12 +45,12 @@ router.post('/login', async (req, res) => {
         if (user && user.salt && user.hash) {
             if (validPassword(password, user.hash, user.salt)) {
                 if (user.status) {
-                    if (!user.ip || user.ip === req_ip) {
+                    if (user.ip) {
                         const newObj = {
                             id: user._id,
                             name: user.name,
                             email: user.email,
-                        };
+                        }
                         const token = generateJWT(newObj);
                         await AdminToken.create({ admin_id: user._id, token, req_ip, user_agent: req.headers['user-agent'] });
                         responseManagement.sendResponse(res, httpStatus.OK, 'Logged in successfully', { token });
